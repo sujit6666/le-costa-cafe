@@ -1,26 +1,43 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --gold-primary: #D4AF37;
+    --marble-surface: #0E0E11;
+  }
+
+  body {
+    background-color: #070709;
+    color: #F3EFE0;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom Typography Helpers */
+.font-serif-luxury {
+  font-family: var(--font-cinzel), Georgia, serif;
+}
+
+.font-italic-accent {
+  font-family: var(--font-cormorant), Georgia, serif;
+}
+
+/* Glassmorphism & Gold Highlights */
+.glass-panel {
+  background: rgba(18, 18, 22, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.gold-glow {
+  box-shadow: 0 0 35px -5px rgba(212, 175, 55, 0.25);
+}
+
+.bg-noise {
+  background-color: #070709;
+  background-image: radial-gradient(rgba(212, 175, 55, 0.05) 1px, transparent 0);
+  background-size: 24px 24px;
 }
