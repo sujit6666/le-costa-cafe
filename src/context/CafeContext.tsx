@@ -34,7 +34,7 @@ interface CafeContextType {
   clearCart: () => void;
   isPlayingAudio: boolean;
   setIsPlayingAudio: (playing: boolean) => void;
-  lastInvoiceData: { items: CartItem[]; subtotal: number; tip: number; total: number; orderId: string; date: string } | null;
+  lastInvoiceData: any;
   setLastInvoiceData: (data: any) => void;
 }
 
@@ -53,8 +53,7 @@ export const CafeProvider = ({ children }: { children: ReactNode }) => {
   const [lastInvoiceData, setLastInvoiceData] = useState<any>(null);
 
   const addToCart = (item: CartItem) => setCart((prev) => [...prev, item]);
-  const removeFromCart = (id: string) =>
-    setCart((prev) => prev.filter((i) => i.id !== id));
+  const removeFromCart = (id: string) => setCart((prev) => prev.filter((i) => i.id !== id));
   const clearCart = () => setCart([]);
 
   return (
