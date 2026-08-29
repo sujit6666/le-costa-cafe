@@ -38,6 +38,7 @@ import confetti from "canvas-confetti";
 interface VideoEngineProps {
   id?: string;
   src: string;
+  poster: string;
   title: string;
   subtitle: string;
   category: string;
@@ -47,6 +48,7 @@ interface VideoEngineProps {
 function ScrubCanvasVideo({
   id,
   src,
+  poster,
   title,
   subtitle,
   category,
@@ -54,6 +56,10 @@ function ScrubCanvasVideo({
 }: VideoEngineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const isVisibleRef = useRef(false);
+  const frameRequestRef = useRef<number | null>(null);
+  const lastRequestedTimeRef = useRef(-1);
+  const [isVideoReady, setIsVideoReady] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -69,67 +75,88 @@ function ScrubCanvasVideo({
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    const container = containerRef.current;
+    if (!video || !container) return;
 
-    video.currentTime = 0.01;
-    let isSeeking = false;
-    let animationFrameId: number;
+    video.setAttribute("webkit-playsinline", "true");
 
-    const handleSeeked = () => {
-      isSeeking = false;
-    };
+    const seekToScrollPosition = () => {
+      frameRequestRef.current = null;
+      if (!isVisibleRef.current || !Number.isFinite(video.duration) || video.duration <= 0) return;
 
-    video.addEventListener("seeked", handleSeeked);
+      const progress = Math.min(Math.max(smoothProgress.get(), 0), 0.999);
+      const targetTime = Math.max(0.04, Math.min(progress * video.duration, video.duration - 0.04));
 
-    const updateFrame = () => {
-      if (video.duration && !Number.isNaN(video.duration)) {
-        const progress = Math.min(Math.max(smoothProgress.get(), 0), 0.999);
-        const targetTime = progress * video.duration;
-
-        if (!isSeeking && Math.abs(video.currentTime - targetTime) > 0.02) {
-          isSeeking = true;
-          if ("fastSeek" in video) {
-            (video as any).fastSeek(targetTime);
-          } else {
-            (video as any).currentTime = targetTime;
-          }
-        }
+      // A small threshold avoids expensive decoder work for imperceptible changes on mobile.
+      if (Math.abs(lastRequestedTimeRef.current - targetTime) >= 0.08) {
+        lastRequestedTimeRef.current = targetTime;
+        video.currentTime = targetTime;
       }
-      animationFrameId = requestAnimationFrame(updateFrame);
     };
 
-    animationFrameId = requestAnimationFrame(updateFrame);
+    const scheduleSeek = () => {
+      if (frameRequestRef.current === null) {
+        frameRequestRef.current = requestAnimationFrame(seekToScrollPosition);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisibleRef.current = entry.isIntersecting;
+        if (entry.isIntersecting) scheduleSeek();
+      },
+      { rootMargin: "150px 0px" }
+    );
+
+    const handleReady = () => {
+      setIsVideoReady(true);
+      scheduleSeek();
+    };
+
+    observer.observe(container);
+    video.addEventListener("loadeddata", handleReady, { once: true });
+    video.addEventListener("canplay", handleReady, { once: true });
+    const unsubscribe = smoothProgress.on("change", scheduleSeek);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      video.removeEventListener("seeked", handleSeeked);
+      observer.disconnect();
+      unsubscribe();
+      video.removeEventListener("loadeddata", handleReady);
+      video.removeEventListener("canplay", handleReady);
+      if (frameRequestRef.current !== null) cancelAnimationFrame(frameRequestRef.current);
     };
   }, [smoothProgress]);
 
   return (
-    <section id={id} ref={containerRef} className="relative h-[250vh] w-full bg-[#070709]">
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+    <section id={id} ref={containerRef} className="relative h-[170svh] sm:h-[220svh] lg:h-[250vh] w-full bg-[#070709]">
+      <div className="sticky top-0 h-[100svh] w-full overflow-hidden flex items-center justify-center">
         <video
           ref={videoRef}
           src={src}
+          poster={poster}
           muted
           playsInline
-          preload="auto"
-          crossOrigin="anonymous"
-          className="w-full h-full object-cover filter brightness-90 contrast-105 pointer-events-none"
+          preload="metadata"
+          className={`w-full h-full object-cover filter brightness-90 contrast-105 pointer-events-none transition-opacity duration-500 ${
+            isVideoReady ? "opacity-100" : "opacity-0"
+          }`}
           style={{ willChange: "transform", transform: "translateZ(0)" }}
         />
 
+        {!isVideoReady && (
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${poster})` }} />
+        )}
+
         <div className="absolute inset-0 bg-gradient-to-t from-[#070709] via-transparent to-[#070709]/80 pointer-events-none" />
 
-        <div className="absolute bottom-20 left-8 md:left-20 max-w-xl z-20 pointer-events-auto">
-          <p className="text-[11px] tracking-[0.3em] uppercase text-[#D4AF37] font-semibold mb-2">
+        <div className="absolute bottom-8 left-5 right-5 sm:bottom-16 sm:left-8 sm:right-auto md:left-20 max-w-xl z-20 pointer-events-auto">
+          <p className="text-[9px] sm:text-[11px] tracking-[0.24em] sm:tracking-[0.3em] uppercase text-[#D4AF37] font-semibold mb-2">
             Signature Craft // {category}
           </p>
-          <h2 className="font-serif-luxury text-4xl sm:text-5xl lg:text-6xl text-white font-bold tracking-tight mb-3">
+          <h2 className="font-serif-luxury text-3xl sm:text-5xl lg:text-6xl text-white font-bold tracking-tight mb-3">
             {title}
           </h2>
-          <p className="font-italic-accent text-lg sm:text-xl text-[#D1C7BD] italic mb-6 leading-relaxed">
+          <p className="font-italic-accent text-base sm:text-xl text-[#D1C7BD] italic mb-5 sm:mb-6 leading-relaxed">
             {subtitle}
           </p>
           {onCustomize && (
@@ -137,7 +164,7 @@ function ScrubCanvasVideo({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onCustomize}
-              className="px-6 py-3 rounded-full bg-gradient-to-r from-[#F5E08B] to-[#D4AF37] text-black font-bold uppercase tracking-widest text-[11px] hover:brightness-110 shadow-2xl transition-all flex items-center gap-2"
+              className="px-5 sm:px-6 py-3 rounded-full bg-gradient-to-r from-[#F5E08B] to-[#D4AF37] text-black font-bold uppercase tracking-widest text-[10px] sm:text-[11px] hover:brightness-110 shadow-2xl transition-all flex items-center gap-2"
             >
               <Sparkles className="w-3.5 h-3.5" />
               Customize Degustation
@@ -1757,11 +1784,11 @@ export default function Page() {
       <ParticleCanvas />
 
       {/* TOP HEADER */}
-      <header className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 md:px-12 py-5 backdrop-blur-lg bg-black/50 border-b border-white/5">
-        <div className="flex items-center gap-4">
+      <header className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-4 sm:px-6 md:px-12 py-3 sm:py-5 backdrop-blur-lg bg-black/50 border-b border-white/5">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <h1
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="font-serif-luxury text-2xl tracking-[0.25em] font-bold text-white cursor-pointer hover:text-[#D4AF37] transition-colors"
+            className="font-serif-luxury text-lg sm:text-2xl tracking-[0.18em] sm:tracking-[0.25em] font-bold text-white cursor-pointer hover:text-[#D4AF37] transition-colors whitespace-nowrap"
           >
             LE COSTA
           </h1>
@@ -1770,7 +1797,7 @@ export default function Page() {
           </span>
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-6">
+        <div className="flex items-center gap-2 sm:gap-6">
           <nav className="hidden md:flex items-center gap-6 text-[11px] uppercase tracking-[0.2em] font-semibold text-[#D1C7BD]">
             <button
               onClick={() => scrollToSection("coffee-section")}
@@ -1843,7 +1870,7 @@ export default function Page() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsReservationOpen(true)}
-              className="flex items-center gap-2 text-[11px] tracking-widest text-[#E6E0D4] hover:text-[#D4AF37] transition-colors uppercase border border-white/10 px-4 py-2 rounded-full glass-panel"
+              className="flex items-center gap-2 text-[11px] tracking-widest text-[#E6E0D4] hover:text-[#D4AF37] transition-colors uppercase border border-white/10 px-2.5 sm:px-4 py-2 rounded-full glass-panel"
             >
               <Calendar className="w-3.5 h-3.5 text-[#D4AF37]" />
               <span className="hidden sm:inline">Reserve Salon</span>
@@ -1869,6 +1896,7 @@ export default function Page() {
       <ScrubCanvasVideo
         id="coffee-section"
         src="/videos/coffee.mp4"
+        poster="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=1200&auto=format&fit=crop"
         category="COFFEE ROASTERS"
         title="L'OR NOIR ESPRESSO"
         subtitle="Extracted at 9.2 bars through 200-micron sintered titanium mesh."
@@ -1879,8 +1907,8 @@ export default function Page() {
       />
 
       {/* 12 COFFEES SHOWCASE */}
-      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
-        <div className="text-center mb-16">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="text-center mb-10 sm:mb-16">
           <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-semibold block mb-2">
             The Micro-Lot Cellar
           </span>
@@ -1938,6 +1966,7 @@ export default function Page() {
       <ScrubCanvasVideo
         id="pizza-section"
         src="/videos/pizza.mp4"
+        poster="https://images.unsplash.com/photo-1604382355076-af4b0eb60143?q=80&w=1200&auto=format&fit=crop"
         category="ARTISAN SOURDOUGH"
         title="72-HR RIVIERA CRUST"
         subtitle="Bespoke stone-milled grains naturally fermented and infused with Ligurian sea brine."
@@ -1948,8 +1977,8 @@ export default function Page() {
       />
 
       {/* 10 PIZZAS SHOWCASE */}
-      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
-        <div className="text-center mb-16">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="text-center mb-10 sm:mb-16">
           <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-semibold block mb-2">
             Stone Oven Fermentation
           </span>
@@ -2007,6 +2036,7 @@ export default function Page() {
       <ScrubCanvasVideo
         id="burger-section"
         src="/videos/burger.mp4"
+        poster="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1200&auto=format&fit=crop"
         category="A5 MIYAZAKI ASSEMBLAGE"
         title="THE WAGYU BRIOCHE"
         subtitle="Glazed in black Périgord truffle butter, bone marrow reduction, and cured gold leaf."
@@ -2017,8 +2047,8 @@ export default function Page() {
       />
 
       {/* 8 BURGERS SHOWCASE */}
-      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
-        <div className="text-center mb-16">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="text-center mb-10 sm:mb-16">
           <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-semibold block mb-2">
             Prime Japanese Marbling
           </span>
@@ -2076,6 +2106,7 @@ export default function Page() {
       <ScrubCanvasVideo
         id="mocktails-section"
         src="/videos/mocktail.mp4"
+        poster="https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=1200&auto=format&fit=crop"
         category="ZERO-PROOF ELIXIR"
         title="RIVIERA RUBY SPRITZ"
         subtitle="Cold-distilled Mediterranean botanicals infused with clarified blood orange and 24K gold mist."
@@ -2086,8 +2117,8 @@ export default function Page() {
       />
 
       {/* 8 MOCKTAILS SHOWCASE */}
-      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/10">
-        <div className="text-center mb-16">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 md:px-12 max-w-7xl mx-auto border-t border-white/10">
+        <div className="text-center mb-10 sm:mb-16">
           <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-semibold block mb-2">
             Zero-Proof Gastronomy
           </span>
