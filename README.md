@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ☕ Le Costa Cafe — Luxury Riviera Gastronomy & Cinematic Web Experience
 
-## Getting Started
+An immersive, high-end cafe e-commerce web application inspired by Riviera luxury dining across Monaco, Nice, and Paris. Features hardware-accelerated video scroll-scrubbing, live dynamic SVG latte art customization, and a comprehensive multi-instrument checkout.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🌐 Live Demo & Links
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+* **Live Demo**: [https://le-costa-cafe.vercel.app/](https://le-costa-cafe.vercel.app/)
+* **Source Code**: [https://github.com/sujit6666/le-costa-cafe](https://github.com/sujit6666/le-costa-cafe)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✨ Key Features
 
-## Learn More
+* **Cinematic Video Scroll-Scrubbing**: Custom HTML5 canvas-buffered engine delivering 60FPS hardware-accelerated narrative video scrubbing synchronized across desktop and mobile screens.
+* **Live Vector Latte Art Atelier**: Real-time interactive customizer featuring 9 distinct SVG-rendered barista foam patterns (Tulip, Fern, Layered Heart, Butterfly, and more) with dynamic milk crema shading.
+* **Artisanal Menu & Degustation Cart**: Multi-category showcase spanning 38 specialty items across micro-lot coffees, sourdough pizzas, Wagyu brioches, and zero-proof botanical elixirs.
+* **Multi-Instrument Checkout & Tax Invoicing**: Simulated payments via Black Card, Apple Pay, Web3 USDT/crypto, and UPI with celebration confetti triggers and printable/PDF digital tax receipts.
+* **Acoustic Lounge Soundscape**: Generative vinyl audio ambience powered by the Web Audio API.
+* **Mobile-First Responsiveness**: Touch-optimized compact grid layouts and navigation controls tailored for mobile viewports.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛠️ Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+* **Framework**: Next.js (App Router), React
+* **Language**: TypeScript
+* **Styling & UI**: Tailwind CSS, Lucide React Icons
+* **Animation & Rendering**: Framer Motion, HTML5 Canvas API, SVG
+* **Audio & Utilities**: Web Audio API, Canvas Confetti
+* **Deployment**: Vercel
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
