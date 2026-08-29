@@ -78,6 +78,26 @@ export const ArtisanalCustomizerModal: React.FC = () => {
         },
       ],
     },
+    mocktail: {
+      title: "Botanical Elixir Infusion",
+      basePrice: 18,
+      options: [
+        {
+          name: "Essence Base",
+          choices: [
+            { label: "Distilled Damask Rose Hydrosol", surcharge: 0 },
+            { label: "Smoked French Oak & Bergamot", surcharge: 4 },
+          ],
+        },
+        {
+          name: "Effervescence Finish",
+          choices: [
+            { label: "Perrier Sparkling Mineral Spring", surcharge: 0 },
+            { label: "Fever-Tree Mediterranean Tonic", surcharge: 3 },
+          ],
+        },
+      ],
+    },
   };
 
   const currentConfig = configs[activeChapter];

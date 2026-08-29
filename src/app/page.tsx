@@ -91,7 +91,7 @@ function ScrubCanvasVideo({
           if ("fastSeek" in video) {
             (video as any).fastSeek(targetTime);
           } else {
-            video.currentTime = targetTime;
+            (video as any).currentTime = targetTime;
           }
         }
       }
